@@ -140,6 +140,23 @@ if (РЕЖИМ === 'переходы') {
   console.log('кнопка исполнения после утверждения:', открыт);
   if (открыт.includes('🔒')) ошибки.push('после утверждения плана переход остался закрытым');
 
+  // Шаги задачи, заведённой руками, закрывает кнопка «Шаг сделан»: без неё
+  // условие «шаги доведены» из браузера не выполнить вовсе.
+  await выполнить(`(() => {
+    const к = Array.from(document.querySelectorAll('#переходы button'))
+      .find(к => к.textContent.includes('исполнение'));
+    if (к) к.click(); return 'ок'; })()`);
+  await new Promise(р => setTimeout(р, 2000));
+  const шаговДо = await выполнить(
+    `document.querySelectorAll('.лента-шагов .готов').length`);
+  await выполнить(`document.getElementById('шаг-значение').value = 'сделано из браузера';
+                   document.getElementById('закрыть-шаг').click(); 'ок'`);
+  await new Promise(р => setTimeout(р, 2000));
+  const шаговПосле = await выполнить(
+    `document.querySelectorAll('.лента-шагов .готов').length`);
+  console.log(`шагов закрыто: было ${шаговДо}, стало ${шаговПосле}`);
+  if (шаговПосле <= шаговДо) ошибки.push('кнопка «Шаг сделан» не закрыла шаг');
+
   const сбоиПереходов = await выполнить(`document.querySelectorAll('#чат .ошибка').length`);
   console.log('\n=== итог ===');
   console.log('сообщений об ошибке в чате:', сбоиПереходов);

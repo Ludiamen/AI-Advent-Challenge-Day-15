@@ -269,6 +269,8 @@ def build_parser() -> argparse.ArgumentParser:
                         help="перевести задачу на стадию: " + ", ".join(STAGES))
     parser.add_argument("--план", dest="do_plan", action="store_true",
                         help="составить план задачи и положить в рабочую память")
+    parser.add_argument("--закрыть-шаг", dest="close_step", action="store_true",
+                        help="отметить текущий шаг задачи сделанным")
     parser.add_argument("--утвердить-план", dest="approve", action="store_true",
                         help="подписать план задачи — этим открывается переход к реализации")
     parser.add_argument("--снять-утверждение", dest="unapprove", action="store_true",
@@ -1359,6 +1361,10 @@ def выполнить(agent: MemoryAgent, аргументы) -> int:
 
     if аргументы.show_conditions:
         return показать_условия(agent)
+
+    if аргументы.close_step:
+        задача = agent.close_step()
+        print(f"Шаг закрыт. {задача.состояние_словами}")
 
     if аргументы.approve:
         подпись = agent.approve_plan()

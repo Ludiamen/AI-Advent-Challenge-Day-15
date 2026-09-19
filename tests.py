@@ -2308,6 +2308,21 @@ class ВебИнтерфейс(unittest.TestCase):
         self.assertIn(отчёт["вердикт"], ("прошла", "не прошла"))
         self.клиент.post("/api/task", json={"action": "отпустить"})
 
+    def test_шаг_закрывается_со_страницы(self):
+        self.клиент.post("/api/task", json={"action": "создать", "task_id": "шаги-веб",
+                                            "title": "шаги"})
+        self.web.agent.task.set_plan(["первый", "второй"])
+        self.web.agent.save_task()
+        self.клиент.post("/api/task", json={"action": "утвердить-план"})
+        self.клиент.post("/api/task", json={"action": "стадия", "stage": "execution"})
+        закрыт = self.клиент.post("/api/task", json={"action": "закрыть-шаг",
+                                                     "value": "сделано"})
+        self.assertEqual(закрыт.status_code, 200)
+        состояние = закрыт.get_json()["state"]["task_state"]
+        self.assertEqual(состояние["шаги"][0]["состояние"], "готов")
+        self.assertEqual(состояние["шаг"], 2)
+        self.клиент.post("/api/task", json={"action": "отпустить"})
+
     def test_личное_условие_заводится_и_снимается_со_страницы(self):
         ответ = self.клиент.post("/api/condition", json={
             "action": "добавить", "код": "нужна-ссылка",
@@ -2840,6 +2855,28 @@ class ПереходыАгента(unittest.TestCase):
             self.assertEqual(сделано_до, 1)
             self.assertEqual(len(итог2.шаги), 1)
             self.assertEqual(агент.task, None)
+        finally:
+            агент.close()
+
+    def test_шаг_задачи_закрывается_руками(self):
+        # Задачу, заведённую руками, никто не ведёт по шагам: исполнитель
+        # сценария тут не участвует. Без ручного закрытия условие
+        # «шаги-доведены» из интерфейса не выполнить, и переход к проверке
+        # остался бы закрытым навсегда.
+        агент = self._агент(["ответ"])
+        try:
+            агент.start_task("проба", "слой")
+            агент.task.set_plan(["разобрать схему", "написать модель"])
+            агент.approve_plan("Максим")
+            агент.transition(EXECUTION)
+            self.assertFalse(агент.check_transition(VALIDATION).можно)
+            агент.close_step("схема разобрана")
+            агент.close_step("модель написана")
+            self.assertTrue(агент.task.шаги_пройдены)
+            self.assertTrue(агент.check_transition(VALIDATION).можно)
+            from agent import AgentError
+            with self.assertRaises(AgentError):
+                агент.close_step()          # открытых шагов больше нет
         finally:
             агент.close()
 

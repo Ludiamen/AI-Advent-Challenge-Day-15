@@ -585,6 +585,29 @@ class MemoryAgent:
                 stage=self.stage,
             )
 
+    def close_step(self, результат: str = "") -> TaskState:
+        """Отмечает текущий шаг задачи сделанным и двигает указатель.
+
+        Нужен задаче, которую ведут руками: её шаги приходят из плана, и
+        закрывать их некому — исполнитель сценария тут не участвует. Без этого
+        условие «шаги доведены» из интерфейса не выполнить вовсе, и переход к
+        проверке оставался бы закрытым навсегда.
+        """
+        if self.task is None:
+            raise AgentError("Активной задачи нет: закрывать нечего.")
+        шаг = self.task.шаг
+        if шаг is None:
+            raise AgentError(
+                "Открытых шагов нет: либо плана не было, либо все шаги пройдены."
+            )
+        self.task.начать_шаг()
+        self.task.закончить_шаг(результат or "закрыт вручную")
+        self.memory.working.save(self.task)
+        self.memory._log("шаг-задачи", WORKING, self.task.task_id,
+                         f"шаг «{шаг.имя}» закрыт", applied=True,
+                         reason="шаг отмечен сделанным вручную")
+        return self.task
+
     def remember_step(self, key: str, value: str) -> TaskState:
         if self.task is None:
             raise AgentError("Активной задачи нет: промежуточный результат некуда класть.")

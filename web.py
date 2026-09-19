@@ -267,6 +267,8 @@ def api_task():
         elif действие == "стадия":
             agent.transition((данные.get("stage") or "").strip(),
                              (данные.get("note") or "").strip())
+        elif действие == "закрыть-шаг":
+            agent.close_step((данные.get("value") or "").strip())
         elif действие == "утвердить-план":
             подпись = agent.approve_plan((данные.get("кем") or "").strip(),
                                          (данные.get("пояснение") or "").strip())
