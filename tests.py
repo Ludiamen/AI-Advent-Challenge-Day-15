@@ -961,7 +961,7 @@ class Сценарии(unittest.TestCase):
 
     def setUp(self) -> None:
         self.каталог = tempfile.mkdtemp()
-        self.хранилище = ScenarioStore(os.path.join(self.каталог, "сценарии.json"))
+        self.хранилище = ScenarioStore(os.path.join(self.каталог, "scenarios.json"))
 
     def tearDown(self) -> None:
         shutil.rmtree(self.каталог, ignore_errors=True)
@@ -1546,7 +1546,7 @@ class ХранилищеИнвариантов(unittest.TestCase):
 
     def setUp(self) -> None:
         self.каталог = tempfile.mkdtemp()
-        self.склад = InvariantStore(os.path.join(self.каталог, "инварианты.json"))
+        self.склад = InvariantStore(os.path.join(self.каталог, "invariants.json"))
 
     def tearDown(self) -> None:
         shutil.rmtree(self.каталог, ignore_errors=True)
@@ -1991,7 +1991,7 @@ class ВебИнтерфейс(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.каталог = tempfile.mkdtemp(prefix="веб-тест-")
+        cls.каталог = tempfile.mkdtemp(prefix="web-test-")
         # web.py создаёт агента при импорте, поэтому каталог памяти задаётся до
         # него — иначе тест писал бы в рабочую память проекта.
         os.environ["MEMORY_DIR"] = cls.каталог
@@ -2462,7 +2462,7 @@ class УсловияПерехода(unittest.TestCase):
         self.assertFalse(любое.подходит(EXECUTION, EXECUTION))
 
     def test_личное_условие_хранится_и_снимается(self):
-        хранилище = ConditionStore(os.path.join(self.каталог, "условия.json"))
+        хранилище = ConditionStore(os.path.join(self.каталог, "conditions.json"))
         self.assertEqual(хранилище.all(), [])
         хранилище.add(Условие(код="ссылка", откуда=VALIDATION, куда=DONE,
                               что=tr.ЕСТЬ_В_СОБРАННОМ, значение="репозиторий",
@@ -2473,7 +2473,7 @@ class УсловияПерехода(unittest.TestCase):
         self.assertFalse(хранилище.remove("ссылка"))
 
     def test_личное_не_подменяет_базовое(self):
-        хранилище = ConditionStore(os.path.join(self.каталог, "условия.json"))
+        хранилище = ConditionStore(os.path.join(self.каталог, "conditions.json"))
         with self.assertRaises(TransitionConfigError):
             # Совпадение кода — единственный способ отменить базовое условие,
             # и поэтому он закрыт.
